@@ -17,44 +17,46 @@ def home():
         selected_day = request.form.get("day")
         selected_hours = request.form.getlist("hour")
 
-        if not timetable_file or not rooms_file:
-            return render_template("index.html", message="Upload both Excel files.")
+        if not timetable_file or timetable_file.filename == "":
+            return render_template("index.html", message="Please upload timetable file")
+
+        if not rooms_file or rooms_file.filename == "":
+            return render_template("index.html", message="Please upload rooms master file")
 
         if not selected_day or len(selected_hours) == 0:
-            return render_template("index.html",
-                                   message="Select one day and at least 1 hour.",
-                                   selected_day=selected_day,
-                                   selected_hours=selected_hours)
+            return render_template(
+                "index.html",
+                message="Select day and at least one hour",
+                selected_day=selected_day,
+                selected_hours=selected_hours
+            )
 
         try:
-            timetable_df = pd.read_excel(timetable_file, header=1)
+            # MEMORY OPTIMIZED EXCEL READ
+            timetable_df = pd.read_excel(
+                timetable_file,
+                header=1,
+                engine="openpyxl"
+            )
+
+            timetable_df.fillna("-", inplace=True)
             timetable_df.columns = timetable_df.columns.astype(str).str.strip()
 
-            # Find correct sheet in rooms file
-            xls = pd.ExcelFile(rooms_file)
-            rooms_df = None
-
-            for sheet in xls.sheet_names:
-                temp_df = pd.read_excel(xls, sheet_name=sheet)
-                temp_df.columns = temp_df.columns.astype(str).str.strip()
-                if "Room No" in temp_df.columns:
-                    rooms_df = temp_df
-                    break
-
-            if rooms_df is None:
-                return render_template("index.html", message="Correct sheet not found in rooms file.")
+            # Read rooms master file
+            rooms_df = pd.read_excel(rooms_file, engine="openpyxl")
+            rooms_df.columns = rooms_df.columns.astype(str).str.strip()
 
         except Exception as e:
             return render_template("index.html", message=f"Excel read error: {e}")
 
         columns_to_check = [f"{selected_day}{h}" for h in selected_hours]
 
-        # -------- NEW LOGIC --------
+        # GROUP ROOMS (C007-A, C007-B etc → C007)
         room_groups = {}
 
-        for _, row in timetable_df.iterrows():
+        for row in timetable_df.itertuples(index=False):
 
-            room_no = str(row.iloc[0]).strip()
+            room_no = str(row[0]).strip()
 
             if room_no == "-" or room_no == "nan":
                 continue
@@ -75,12 +77,14 @@ def home():
             for col in columns_to_check:
 
                 if col not in timetable_df.columns:
-                    return render_template("index.html", message=f"{col} not found.")
+                    return render_template("index.html", message=f"{col} not found")
+
+                col_index = timetable_df.columns.get_loc(col)
 
                 for r in rows:
-                    cell = r[col]
+                    cell = r[col_index]
 
-                    if not (pd.isna(cell) or str(cell).strip() == "-"):
+                    if str(cell).strip() != "-":
                         room_free = False
                         break
 
@@ -90,7 +94,7 @@ def home():
             if room_free:
                 empty_rooms.append(base_room)
 
-        # -------- GET ROOM DETAILS --------
+        # GET ROOM DETAILS
         for base_room in empty_rooms:
 
             match = rooms_df[
@@ -107,12 +111,14 @@ def home():
         if not rooms:
             message = "No empty rooms available for selected hours."
 
-    return render_template("index.html",
-                           rooms=rooms,
-                           message=message,
-                           selected_day=selected_day,
-                           selected_hours=selected_hours)
+    return render_template(
+        "index.html",
+        rooms=rooms,
+        message=message,
+        selected_day=selected_day,
+        selected_hours=selected_hours
+    )
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
