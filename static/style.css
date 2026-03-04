@@ -1,0 +1,84 @@
+body {
+    font-family: Arial, sans-serif;
+    background: #e5e7eb;
+    display: flex;
+    justify-content: center;
+    padding: 40px;
+}
+
+.container {
+    background: white;
+    padding: 40px;
+    width: 800px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.section {
+    margin-bottom: 25px;
+}
+
+.day-buttons, .hour-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.day-btn, .hour-btn {
+    padding: 10px 18px;
+    border: 2px solid #2563eb;
+    background: white;
+    color: #2563eb;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.day-btn.active, .hour-btn.active {
+    background: #2563eb;
+    color: white;
+}
+
+.search-section {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.search-btn {
+    padding: 12px 30px;
+    background: #16a34a;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+table {
+    width: 100%;
+    margin-top: 30px;
+    border-collapse: collapse;
+}
+
+th {
+    background: #2563eb;
+    color: white;
+    padding: 12px;
+}
+
+td {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+    text-align: center;
+}
+
+.error {
+    color: red;
+    text-align: center;
+    margin-top: 15px;
+}
